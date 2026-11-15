@@ -3,24 +3,25 @@
 **Audience:** an Opus model implementing this plugin from scratch.
 **Owner:** Hardy. Fluent in VCV Rack, does not read C++. Build the whole plugin in one go, test it yourself, hand over the finished result. No milestone check-ins.
 
-**What it is:** a VCV Rack 2 plugin, brand and slug `Eightfold`, with two modules whose behaviour follows two Make Noise New Universal Skiff System (N.U.S.S.) modules as described in their public manuals:
+**What it is:** a VCV Rack 2 plugin, brand and slug `Eightfold`, with three modules whose behaviour follows three Make Noise New Universal Skiff System (N.U.S.S.) modules as described in their public manuals:
 
 | Our module | Inspired by | One line |
 |---|---|---|
 | **EFG** Eightfold Function Generator | PoliMATHS | Eight MATHS-style rise/fall functions, each with an enveloped oscillation, fired by one gate through four "span" activation modes |
 | **ETS** Eightfold Time Smear | MultiMod | One CV in, eight copies out, each read from a shared buffer at its own speed and phase |
+| **EGX** Eightfold Gesture Extractor | GTE (Gestural Time Extractor) | Turns the movement of a CV, or a Channel Index signal, into eight channel gates, odd/even gates and a change-pulse stream |
 
 Feasibility notes and sources: `docs/RESEARCH.md` (copy of `/mnt/project-files/nuss-vcv/01-feasibility.md`).
 
-**Decisions used here (Hardy asked on 2026-11-15 for these two to be designed for Opus; the defaults below were chosen by Fable and can be overridden):**
+**Decisions used here (Hardy asked on 2026-11-15 for EFG and ETS to be designed for Opus, then for EGX to be added before the build; the defaults below were chosen by Fable and can be overridden):**
 
 | Question | Answer used here |
 |---|---|
-| Faithfulness | Behavioural, from the official manuals. There are no schematics or published DSP. Where the manuals leave a number out, this spec gives an estimate, marked **[est]**, kept in one constants file and logged in the accuracy ledger (§11) |
-| Names | Plugin `Eightfold`, modules `EFG` and `ETS`. "Make Noise", "MATHS", "PoliMATHS", "MultiMod", "N.U.S.S." never appear in plugin, module, panel or tag names, and no Make Noise art or logo is used. The manual may say "inspired by the Make Noise PoliMATHS" once per module |
+| Faithfulness | Behavioural, from the official manuals. There are no schematics or published DSP. Where the manuals leave a number out, this spec gives an estimate, marked **[est]**, kept in one constants file and logged in the accuracy ledger (§12) |
+| Names | Plugin `Eightfold`, modules `EFG`, `ETS` and `EGX`. "Make Noise", "MATHS", "PoliMATHS", "MultiMod", "GTE", "Gestural Time Extractor", "N.U.S.S." never appear in plugin, module, panel or tag names, and no Make Noise art or logo is used. The manual may say "inspired by the Make Noise PoliMATHS" once per module |
 | Hardware press-and-hold combos | Replaced by dedicated, labelled buttons (and right-click menu items). Rack users can't discover hold combos and the panels have room |
 | Polyphony | Every module has eight mono channel outputs **and** one 8-channel POLY output. Inputs are mono (channel 0) unless stated |
-| Channel Index voltage | 0.5 V per channel on both modules (the PoliMATHS figure). The MultiMod manual prints 1 V per channel but its changelog says it follows PoliMATHS; a right-click option offers 1 V per channel |
+| Channel Index voltage | 0.5 V per channel on all three modules (the PoliMATHS figure). The MultiMod manual prints 1 V per channel but its changelog says it follows PoliMATHS; a right-click option offers 1 V per channel |
 | Look | Text labels on every control and jack, no symbols. Per-channel RGB LEDs mirror the hardware's activity windows |
 | Repo | `hardyfinn/NUSS` (created by Hardy 2026-11-15), work on `main`. The repo name is fine for a personal repo; the plugin, module and panel names stay Eightfold/EFG/ETS |
 | Builds | Apple silicon Mac only (Hardy's standing preference). Keep the other platforms' CI jobs out unless trivial to leave in |
@@ -36,7 +37,7 @@ Feasibility notes and sources: `docs/RESEARCH.md` (copy of `/mnt/project-files/n
 5. **Every param has a tooltip and unit, every port a name.** The tooltip name is the printed label spelled out.
 6. **Stability.** Clamp every state variable; end each `process()` with an `isfinite` guard that resets bad state to 0. Outputs stay within ±10 V (EFG soft-clips submix overs as in §4.9).
 7. **Ambiguity:** pick the reading closest to the manual, write it in `docs/DECISIONS.md`, list it in the hand-over. The manual extracts in §4 and §5 note the known inconsistencies; follow the resolution given here.
-8. **CPU:** each module under 0.5% of one core at 48 kHz.
+8. **CPU:** EFG and ETS each under 0.5% of one core at 48 kHz, EGX under 0.1%.
 9. **Persistence:** every button state (modes, cycle type, bipolar, submix, read shape, LFO range, hold) saves to the patch via `dataToJson`/`dataFromJson`. The hardware also saves these at power-off.
 10. Licence GPL-3.0-or-later.
 
@@ -52,13 +53,13 @@ Feasibility notes and sources: `docs/RESEARCH.md` (copy of `/mnt/project-files/n
 ```
 plugin.json  Makefile  README.md  LICENSE
 docs/  BUILD-INSTRUCTIONS.md (this file)  RESEARCH.md  DECISIONS.md  MANUAL.md  Eightfold-Manual.pdf
-res/   EFG.svg  ETS.svg  components/
+res/   EFG.svg  ETS.svg  EGX.svg  components/
 scripts/ make_panels.py  make_manual_pdf.sh
 src/
   plugin.hpp  plugin.cpp
   dsp/  Constants.hpp  Span.hpp  FunctionChannel.hpp  EfgEngine.hpp
-        TimeBuffer.hpp  ReadHead.hpp  EtsEngine.hpp  ChannelIndex.hpp  (+ .cpp as needed)
-  modules/  EFG.cpp  ETS.cpp
+        TimeBuffer.hpp  ReadHead.hpp  EtsEngine.hpp  ChannelIndex.hpp  EgxEngine.hpp  (+ .cpp as needed)
+  modules/  EFG.cpp  ETS.cpp  EGX.cpp
   widgets/  EightfoldComponents.hpp  ChannelLeds.hpp
 tests/
 ```
@@ -69,8 +70,9 @@ tests/
 |---|---|---|---|
 | `EFG` | `EFG Eightfold Function Generator` | 22 | Function generator, Envelope generator, LFO, Polyphonic |
 | `ETS` | `ETS Eightfold Time Smear` | 12 | Delay, LFO, Utility, Polyphonic |
+| `EGX` | `EGX Eightfold Gesture Extractor` | 8 | Clock modulator, Logic, Utility, Polyphonic |
 
-Descriptions should contain the words "8 channel", "function", "envelope" (EFG) and "time shift", "phase", "copies" (ETS) so search finds them. Rack only accepts its own tag list; use the closest valid tags.
+Descriptions should contain the words "8 channel", "function", "envelope" (EFG) "time shift", "phase", "copies" (ETS), and "gesture", "gates", "channel index", "comparator" (EGX) so search finds them. Rack only accepts its own tag list; use the closest valid tags.
 
 ---
 
@@ -79,7 +81,8 @@ Descriptions should contain the words "8 channel", "function", "envelope" (EFG) 
 | Signal | Level |
 |---|---|
 | Gates and triggers in | Rising edge at **> 2 V** (Schmitt: high above 2 V, low below 1 V). Matches MultiMod's stated threshold; the PoliMATHS manual gives none |
-| Trigger outs (CLK OUT) | 10 V, 5 ms |
+| Trigger outs | ETS CLK OUT 10 V, 5 ms; EGX PULSE 10 V, 1 ms (§6.5) |
+| Gate outs (EGX channel, ODD, EVEN) | 0 V / 10 V |
 | EFG channel outputs | ±9 V per channel (Strength range), submix may go higher, then folded/clipped (§4.9) |
 | ETS channel outputs | ±10 V (input is DC-coupled ±10 V; copies keep the level) |
 | Channel Index | 0.5 V × channel number (Ch1 = 0.5 V … Ch8 = 4 V), 0 V = none. Option: 1 V per channel |
@@ -92,7 +95,7 @@ Descriptions should contain the words "8 channel", "function", "envelope" (EFG) 
 
 ## 3. Panels
 
-- Dark grey panel, white text, one accent colour per module (EFG warm orange, ETS teal) for section headings only. Generic look, nothing resembling Make Noise panel art.
+- Dark grey panel, white text, one accent colour per module (EFG warm orange, ETS teal, EGX violet) for section headings only. Generic look, nothing resembling Make Noise panel art.
 - Every control and jack has a printed text label. Section headings group controls (ACTIVATION, FUNCTION, OSCILLATION, SPREAD, OUTPUTS on EFG; INPUT, TIME, PHASE, SPREAD, READ, OUTPUTS on ETS).
 - Each channel has a column with its RGB LED ("activity window") above its output jack, numbered 1 to 8. The 8 outputs sit in a row at the bottom, POLY OUT and INDEX OUT next to them.
 - Buttons are latching or momentary as stated, with an RGB LED inside or next to them showing the state colour from the tables.
@@ -371,16 +374,92 @@ Read shape, LFO range, Channel Index scale, "Clear buffer".
 
 ---
 
-## 6. EFG ↔ ETS together
+## 6. EGX, Eightfold Gesture Extractor (8 HP)
+
+### 6.1 Overview
+
+Inspired by the Make Noise GTE (Gestural Time Extractor), an analog N.U.S.S. companion. A CV at SPAN CV is split into eight voltage bands, one per channel. Whichever band the voltage is in, that channel's gate is high. As the CV moves, the gates change, so the **motion** of any signal (an LFO, an envelope, a hand on a knob, an ETS copy) becomes rhythm. SPACE sets how many volts it takes to cross all eight bands, so it sets how busy the gates are. A clock input can make changes happen only on clock edges. With the knobs at reference settings, EGX translates a Channel Index signal from EFG, ETS or another source into eight gates.
+
+The GTE manual is short and gives almost no numbers (no input range, band edges, gate level, pulse width or LED behaviour). Everything numeric here is [est] and goes in the accuracy ledger (§12). The hardware is analog; this is a behavioural model.
+
+### 6.2 Controls and jacks
+
+| Label | Kind | Function |
+|---|---|---|
+| SPAN | knob −1…+1 (default 0) | Offset added to the input (±5 V): moves which band the signal sits in. Higher voltage = higher channel |
+| SPAN CV | in | The signal being watched |
+| SPAN (atten) | attenuverter −1…+1 (default +1) | Sensitivity and polarity of SPAN CV. Centre = CV ignored, CCW = inverted |
+| SPACE | knob 0…1 (default 1) | Voltage needed to sweep all eight channels (§6.3). Low = tiny movements cross many bands |
+| SPACE CV | in | Adds to SPACE, 0.1 per volt [est] |
+| CLOCK | gate in | When patched, the active channel only updates on rising edges (§6.4) |
+| OUT 1…8 | gate out | One high at a time, or none |
+| POLY OUT | out, 8 ch | The eight gates as one poly cable |
+| PULSE | trigger out | One trigger every time the active channel changes (the "pulse stream": denser when the input moves faster) |
+| ODD | gate out | High while the active channel is 1, 3, 5 or 7 |
+| EVEN | gate out | High while the active channel is 2, 4, 6 or 8 |
+| INDEX OUT | out | Channel Index of the active channel (0.5 V per channel), so EGX can drive EFG directly. **Our addition**; the GTE has no index out. Log it |
+| LEDs 1…8 | per channel | White on the active channel. An LED by PULSE flashes on each trigger. (The GTE manual lists a channel LED but doesn't describe it) |
+
+### 6.3 Band mapping
+
+- Input voltage v = SPAN × 5 V + atten × SPAN CV.
+- Total range R (volts covered by the eight bands) = 0.05 V × 200^space [est]: SPACE full CW → 10 V (1.25 V per band); SPACE at 0 → 50 mV total. SPACE CV can push R lower, to a 5 mV floor, or higher, to 20 V.
+- Bands run from 0 V up to R: channel n (1…8) is active when (n−1) × R/8 ≤ v < n × R/8. Below 0 V or at/above R, **no channel is active** (all gates low, ODD and EVEN low), matching the manual's "outside the range set by Space, none is high".
+- **Hysteresis:** a change needs v to pass a band edge by 2% of the band width [est], so a slow or noisy signal doesn't chatter at an edge.
+- Jumps across several bands in one sample go straight to the new channel and fire one PULSE, not one per skipped band [est; log].
+
+### 6.4 Clock
+
+- CLOCK unpatched: updates every sample.
+- CLOCK patched: compute the band continuously but only commit the active channel (gates, ODD/EVEN, PULSE, INDEX OUT) on a CLOCK rising edge (> 2 V). If the band at the edge is the same channel as before, no PULSE.
+
+### 6.5 Outputs
+
+- Channel gates, ODD, EVEN: 10 V high, 0 V low (menu option 5 V).
+- PULSE: 1 ms 10 V trigger [est] on each committed change, including entering from "none". Leaving to "none" fires no pulse by default (menu option).
+- INDEX OUT: shared `ChannelIndex` code; 0 V when no channel is active.
+
+### 6.6 Channel Index translation
+
+The manual's reference settings are SPAN fully CCW, SPAN atten fully CW, SPACE fully CW. Our band maths wouldn't read a 0.5 V-per-channel signal correctly at those settings, so EGX detects them explicitly: when SPAN ≤ −0.98, atten ≥ 0.98 and SPACE ≥ 0.98, it switches to **index mode** (the LED by SPACE lit bright white, like EFG's MODE LED in index receive):
+- channel = round(SPAN CV / 0.5 V) (or / 1 V with the 1 V option); 0 or out of range = none.
+- Each new non-zero index becomes the active channel at once (or at the next CLOCK edge if patched) and fires PULSE. Flam bursts (several 5 ms indices in a row, §4.11) play as a quick flam across the gates, as the GTE manual describes.
+- Moving any of the three knobs off the reference returns to band mode.
+Log that this is our reading: the GTE manual gives only the knob positions.
+
+### 6.7 Right-click menu
+
+Channel Index scale (0.5 V / 1 V), gate level (10 V / 5 V), "Pulse on leaving range" (default off).
+
+### 6.8 Behaviour tests (doctest, on `EgxEngine`)
+
+1. SPACE 1, atten +1, SPAN 0: input 0.6 V → OUT 1 only, ODD high, EVEN low; 1.9 V → OUT 2 and EVEN; 9.9 V → OUT 8; 10.1 V and −0.1 V → nothing high, ODD and EVEN low.
+2. A ramp 0 → 10 V over 1 s: eight PULSE triggers, channels 1…8 in order, INDEX OUT steps 0.5 → 4 V.
+3. Same ramp with SPACE 0.5 (R ≈ 0.71 V): channel 8 reached within the first ~0.07 s, then nothing high.
+4. Hysteresis: a signal sitting on a band edge with 1 mV noise gives no extra pulses.
+5. CLOCK at 4 Hz with a fast LFO in: gates change only on clock edges.
+6. Atten −1: a rising input steps the channels downward.
+7. Index mode: CV 0.5, 1.0, 1.5 V → channels 1, 2, 3, one PULSE each. A flam (1.5, 1.0, 0.5 V, 5 ms each) → three pulses, ending on channel 1.
+8. EFG engine INDEX OUT → EGX engine in index mode: EGX gates follow EFG activations.
+
+### 6.9 Patch ideas for the manual
+
+- **Gesture rhythms:** a slow random or an ETS copy into SPAN CV, SPACE low, gates to drums. Faster or bigger motion = busier rhythm.
+- **Motion clock:** PULSE as a clock that speeds up when the input moves faster.
+- **Odd/even call and response:** ODD and EVEN to two voices.
+- **EGX → EFG:** INDEX OUT into EFG SPAN CV (index receive), so an LFO's motion picks which EFG envelope fires; or POLY OUT straight into a poly envelope or LPG.
+- **ETS → EGX:** ETS INDEX OUT into EGX in index mode: eight gates showing which ETS copy is highest.
+
+## 7. EFG, ETS and EGX together
 
 The hardware links modules with Channel Index voltages and pre-wired headers. In Rack:
-- **Channel Index:** ETS INDEX OUT → EFG SPAN CV with EFG in INDEX, SPAN centre, SPAN atten full CW. EFG INDEX OUT → another EFG the same way.
+- **Channel Index:** ETS INDEX OUT → EFG SPAN CV with EFG in INDEX, SPAN centre, SPAN atten full CW. EFG INDEX OUT → another EFG the same way. Any INDEX OUT → EGX in index mode (§6.6) gives eight gates; EGX INDEX OUT → EFG lets the motion of any CV choose EFG channels.
 - **Headers:** use POLY OUT cables. EFG POLY OUT → an 8-voice poly VCA/LPG's CV input, oscillator POLY → its audio input, gives the QXG-style "eight voices, eight envelopes" layout with no extra modules from us.
 - **Spread an LFO:** ETS (IN unpatched, Phase raised) → EFG SPREAD CV, or ETS OUT n → EFG RISE CV to disseminate a different rise time each activation.
 
 ---
 
-## 7. Leaning on existing modules (document in the manual)
+## 8. Leaning on existing modules (document in the manual)
 
 These two modules intentionally have no audio voice or LPG. For the patch recipes use Rack modules Hardy already has or that are free in the Library:
 - **Oscillators:** VCV VCO / WT VCO (polyphonic, 8 voices).
@@ -391,9 +470,9 @@ Say in the manual which recipes need which, and why (the NUSS gets these jobs fr
 
 ---
 
-## 8. General tests
+## 9. General tests
 
-- Plugin loads, both modules appear by searching "EFG", "ETS", "Eightfold", "function", "time shift".
+- Plugin loads, all three modules appear by searching "EFG", "ETS", "EGX", "Eightfold", "function", "time shift", "gesture".
 - All params have tooltips; all ports named; POLY OUT reports 8 channels.
 - Save/load restores every button state (modes, cycle, bipolar, submix, read shape, range, hold).
 - Sample rate change (44.1 → 96 kHz) keeps times and rates correct within 1%.
@@ -402,9 +481,9 @@ Say in the manual which recipes need which, and why (the NUSS gets these jobs fr
 
 ---
 
-## 9. Manual (`docs/MANUAL.md` and `docs/Eightfold-Manual.pdf`)
+## 10. Manual (`docs/MANUAL.md` and `docs/Eightfold-Manual.pdf`)
 
-Same structure as the Silverbox and Tudor manuals: what each module is (one line saying it's inspired by the Make Noise PoliMATHS / MultiMod, a living maker's current product, and that this is an independent behavioural re-imagining with its own names), a labelled panel drawing, every control in plain English, the LED colour tables, the Channel Index link, and **patch recipes** (each with the modules needed and the settings):
+Same structure as the Silverbox and Tudor manuals: what each module is (one line saying it's inspired by the Make Noise PoliMATHS / MultiMod / GTE, a living maker's current product, and that this is an independent behavioural re-imagining with its own names), a labelled panel drawing, every control in plain English, the LED colour tables, the Channel Index link, and **patch recipes** (each with the modules needed and the settings):
 
 1. **Eight-voice plucks from one gate:** EFG ROUND, step 1 → POLY OUT to LPG CV, poly VCO → LPG audio, Spread raising Fall from left to right.
 2. **Polyrhythmic envelopes:** EFG PARALLEL, clock into ACTIVATE, SPAN full CW, outputs to eight different destinations.
@@ -418,24 +497,27 @@ Same structure as the Silverbox and Tudor manuals: what each module is (one line
 10. **ETS weighted random gates:** a PWM square into IN, STEP RANDOM read.
 11. **ETS clock divider/multiplier:** IN unpatched, STAIRS shape, Spread to taste: eight related clocks.
 12. **The pair:** ETS INDEX OUT → EFG SPAN CV (Index receive): the loudest ETS copy fires its EFG channel; ETS LFOs into EFG SPREAD CV.
+13. **Gesture rhythms (EGX):** an ETS copy into EGX SPAN CV, SPACE low, gates to drums; PULSE as a motion-speed clock; ODD/EVEN to two voices.
+14. **All three:** ETS LFO → EGX → INDEX OUT → EFG: one slow LFO's motion picks which of eight envelopes fires.
 
 Build the PDF with `scripts/make_manual_pdf.sh` (pandoc or a Python HTML-to-PDF path, as in the Silverbox repo). Copy the finished PDF to `/mnt/project-files/nuss-vcv/Eightfold-Manual.pdf` if that folder is reachable.
 
 ---
 
-## 10. Order of work
+## 11. Order of work
 
 1. Repo skeleton, plugin.json, CI (Mac arm64), `make test` harness.
 2. `ChannelIndex`, `Span`, `FunctionChannel`, `EfgEngine` + tests §4.14.
 3. `TimeBuffer`, `ReadHead`, `EtsEngine` + tests §5.12.
+3a. `EgxEngine` + tests §6.8.
 4. Panels and module wrappers, LEDs, menus, persistence.
-5. General tests §8, CI green, tag `v2.0.0`.
+5. General tests §9, CI green, tag `v2.0.0`.
 6. Manual and PDF, README with install steps.
 7. Hand-over: what was built, every [est] value used, every ambiguity decided, CI run link, release link.
 
 ---
 
-## 11. Accuracy ledger (values not in the manuals, all [est])
+## 12. Accuracy ledger (values not in the manuals, all [est])
 
 | Item | Value used | Basis |
 |---|---|---|
@@ -455,5 +537,11 @@ Build the PDF with `scripts/make_manual_pdf.sh` (pandoc or a Python HTML-to-PDF 
 | ETS Index hysteresis | 2 ms | Avoids chatter; fw 0.7.5 "improved with audio input" |
 | Clock LED colour bands | 0.2 s / 1.5 s / 8 s | Manual gives colours only |
 | HOLD IN behaviour | Gate-high = held | Manual says momentary gate engages hold |
+| EGX range law | R = 0.05 V × 200^space (50 mV…10 V) | GTE manual: Space sets the volts for all 8 channels, minimum "infinitesimally small"; no numbers |
+| EGX band origin | Bands from 0 V up to R | Not published |
+| EGX hysteresis | 2% of band width | Not published |
+| EGX gate level / PULSE width | 10 V / 1 ms | Not published (a third-party listing says 5 V gates; menu offers 5 V) |
+| EGX index mode detection | Explicit at the reference knob positions | Manual gives only the knob positions |
+| EGX INDEX OUT | Added | Not on the hardware; lets EGX drive EFG |
 
 Each value lives in `src/dsp/Constants.hpp`. If testing by ear suggests a better value, change it there and note it in DECISIONS.
