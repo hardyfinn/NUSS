@@ -1,0 +1,35 @@
+{
+  "slug": "Eightfold",
+  "name": "Eightfold",
+  "version": "2.0.0",
+  "license": "GPL-3.0-or-later",
+  "brand": "Eightfold",
+  "author": "Hardy",
+  "authorEmail": "",
+  "authorUrl": "",
+  "pluginUrl": "https://github.com/hardyfinn/NUSS",
+  "manualUrl": "https://github.com/hardyfinn/NUSS/blob/main/docs/MANUAL.md",
+  "sourceUrl": "https://github.com/hardyfinn/NUSS",
+  "donateUrl": "",
+  "changelogUrl": "",
+  "modules": [
+    {
+      "slug": "EFG",
+      "name": "EFG Eightfold Function Generator",
+      "description": "8 channel function and envelope generator: rise/fall functions with enveloped oscillations, fired by one gate through index, round, parallel and binary span modes.",
+      "tags": ["Function generator", "Envelope generator", "LFO", "Polyphonic"]
+    },
+    {
+      "slug": "ETS",
+      "name": "ETS Eightfold Time Smear",
+      "description": "Time shift one CV into 8 copies, each read from a shared buffer at its own speed and phase; internal LFO, hold, tempo sync.",
+      "tags": ["Delay", "LFO", "Utility", "Polyphonic"]
+    },
+    {
+      "slug": "EGX",
+      "name": "EGX Eightfold Gesture Extractor",
+      "description": "Gesture to gates: turns the motion of a CV, or a channel index, into 8 channel gates, odd/even gates and a change pulse; a windowed comparator.",
+      "tags": ["Logic", "Clock modulator", "Utility", "Polyphonic"]
+    }
+  ]
+}
