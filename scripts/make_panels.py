@@ -14,6 +14,9 @@ import math
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import haer_logo
+
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
@@ -41,6 +44,7 @@ CONDENSE = 0.86
 # Rack component sizes (mm, half-extent used for layout checks)
 SIZES = {
     "knob": ("RoundBlackKnob", 5.2),
+    "bknob": ("RoundBigBlackKnob", 7.7),
     "sknob": ("RoundSmallBlackKnob", 4.1),
     "trim": ("Trimpot", 3.2),
 }
@@ -96,10 +100,16 @@ class Box:
 
 
 class Panel:
-    def __init__(self, slug, title, hp, accent):
+    def __init__(self, slug, title, hp, accent, logo=False):
         self.slug, self.title, self.hp, self.accent = slug, title, hp, accent
         self.w = hp * HP
         self.items = []
+        self.texts = []    # free text: (text, x, baseline, cap, colour)
+        self.lines = []    # decorative lines: (x1, y1, x2, y2, colour, width)
+        self.logo = logo   # Haer maker logo on the bottom band
+
+    def text(self, t, x, y, cap, colour=None):
+        self.texts.append((t, x, y, cap, colour or DIM))
 
     def add(self, kind, pid, label, x, y, **ex):
         self.items.append(dict(kind=kind, pid=pid, label=label, x=x, y=y, cap=ex.pop("cap", LABEL_CAP), **ex))
@@ -145,7 +155,7 @@ class Panel:
         x, y = it["x"], it["y"]
         r = self.half(it)
         out = []
-        if it["kind"] in ("knob", "sknob"):
+        if it["kind"] in ("knob", "sknob", "bknob"):
             base = y - r - 1.2
             for i, ln in enumerate(reversed(lines)):
                 out.append((ln, x, base - i * (cap + 0.7), cap, "middle"))
@@ -163,6 +173,9 @@ class Panel:
         for (t, x, base, cap, anchor), it in self.all_labels():
             w = text_width(t, cap)
             b.append(Box(x - w / 2, base - cap, x + w / 2, base, f"label '{t}' of {it['pid']}"))
+        for (t, x, base, cap, _) in self.texts:
+            w = text_width(t, cap)
+            b.append(Box(x - w / 2, base - cap, x + w / 2, base, f"text '{t}'"))
         return b
 
     def check(self):
@@ -208,7 +221,7 @@ class Panel:
                 x0, y0, x1, y1 = self.outbox(it)
                 g.append(f'<rect x="{x0:.2f}" y="{y0:.2f}" width="{x1 - x0:.2f}" height="{y1 - y0:.2f}" rx="1.2" fill="{OUTBOX}"/>')
         for it in self.items:
-            if it["kind"] in ("knob", "sknob"):
+            if it["kind"] in ("knob", "sknob", "bknob"):
                 x, y = it["x"], it["y"]
                 r = self.half(it) + 0.9
                 for t in range(11):
@@ -219,12 +232,22 @@ class Panel:
         while text_width(self.title, cap) > w - 22:
             cap -= 0.1
         acc.append(text_path(self.title, w / 2, TOP_BAND / 2 + cap / 2, cap))
-        acc.append(text_path("EIGHTFOLD", w / 2, BOTTOM_BAND + (H - BOTTOM_BAND) / 2 + SMALL_CAP / 2, SMALL_CAP))
+        bx = w / 2 if not self.logo else w * 0.36
+        acc.append(text_path("EIGHTFOLD", bx, BOTTOM_BAND + (H - BOTTOM_BAND) / 2 + SMALL_CAP / 2, SMALL_CAP))
+        for (x1, y1, x2, y2, c, sw) in self.lines:
+            g.append(f'<line x1="{x1:.2f}" y1="{y1:.2f}" x2="{x2:.2f}" y2="{y2:.2f}" stroke="{c}" stroke-width="{sw}" stroke-linecap="round"/>')
+        extra = {}
+        for (t, x, base, cap_, c) in self.texts:
+            extra.setdefault(c, []).append(text_path(t, x, base, cap_))
         for (t, x, base, cap_, anchor), it in self.all_labels():
             ink.append(text_path(t, x, base, cap_, anchor))
         o.append("".join(g))
         o.append(f'<path fill="{INK}" d="{" ".join(ink)}"/>')
         o.append(f'<path fill="{self.accent}" d="{" ".join(acc)}"/>')
+        for c, ds in extra.items():
+            o.append(f'<path fill="{c}" d="{" ".join(ds)}"/>')
+        if self.logo:
+            o.append(haer_logo.logo_group(w, BAND, x=w * 0.72, y=BOTTOM_BAND + (H - BOTTOM_BAND) / 2, cap=3.0))
         o.append("</svg>")
         return "\n".join(o)
 
@@ -327,6 +350,42 @@ for k, (pid, lab) in enumerate(outs):
         p.led(f"CH{k + 1}_LIGHT", None, x - 4.0, y + 4.6, small=True)
     if pid == "PULSE_OUTPUT":
         p.led("PULSE_LIGHT", None, x + 4.2, y - 4.8, small=True)
+P.append(p)
+
+# ---------------------------------------------------------- JumbleSale -----
+# After Make Noise's Jumbler. Laid out top to bottom in the order the signal flows:
+# inputs, then the two routing controls, then outputs, with every channel's input
+# directly above its output so ROTATE's shift reads as a diagonal.
+CTRL_CAP, JACK_CAP = 3.2, 2.9        # project label standard
+p = Panel("JumbleSale", "JUMBLESALE", 20, "#e05a8a", logo=True)
+W = p.w
+cx = [7.6 + 10.0 * i for i in range(8)]    # channel columns
+px = 93.0                                  # POLY column
+def header(t, y):
+    tw = text_width(t, JACK_CAP) / 2 + 2.5
+    p.text(t, W / 2, y, JACK_CAP, INK)
+    p.lines.append((4.0, y - JACK_CAP / 2, W / 2 - tw, y - JACK_CAP / 2, DIM, 0.35))
+    p.lines.append((W / 2 + tw, y - JACK_CAP / 2, W - 4.0, y - JACK_CAP / 2, DIM, 0.35))
+
+
+header("INPUTS", 17.0)
+for i, x in enumerate(cx):
+    p.jack(f"IN{i + 1}_INPUT", str(i + 1), x, 24.5, cap=JACK_CAP)
+p.jack("POLY_INPUT", "POLY", px, 24.5, cap=JACK_CAP)
+p.lines.append((86.0, 20.0, 86.0, 32.5, OUTBOX, 0.4))
+
+kx = [24.0, 77.6]
+for x, (n, lab) in zip(kx, [("ROTATE", "ROTATE"), ("RADIATE", "RADIATE")]):
+    p.add("bknob", f"{n}_PARAM", lab, x, 53.5, cap=CTRL_CAP)
+    p.add("trim", f"{n}_ATT_PARAM", "ATTEN", x - 9.0, 72.0, cap=CTRL_CAP)
+    p.jack(f"{n}_INPUT", "CV", x + 9.0, 72.0, cap=JACK_CAP)
+p.button("WRAP_PARAM", "WRAP", W / 2, 53.5, "WRAP_LIGHT", latch=True, cap=CTRL_CAP)
+
+header("OUTPUTS", 89.5)
+for i, x in enumerate(cx):
+    p.led(f"CH{i + 1}_LIGHT", None, x, 95.5)
+    p.jack(f"OUT{i + 1}_OUTPUT", str(i + 1), x, 104.0, cap=JACK_CAP)
+p.jack("POLY_OUTPUT", "POLY", px, 104.0, cap=JACK_CAP)
 P.append(p)
 
 

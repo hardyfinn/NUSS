@@ -126,3 +126,39 @@ inline void placeEGX(W* w, M* m) {
 	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(43.750f, 92.000f)), m, M::POLY_OUTPUT));
 	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.000f, 106.000f)), m, M::INDEX_OUTPUT));
 }
+template <class M, class W>
+inline void placeJumbleSale(W* w, M* m) {
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(7.600f, 24.500f)), m, M::IN1_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(17.600f, 24.500f)), m, M::IN2_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(27.600f, 24.500f)), m, M::IN3_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(37.600f, 24.500f)), m, M::IN4_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(47.600f, 24.500f)), m, M::IN5_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(57.600f, 24.500f)), m, M::IN6_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(67.600f, 24.500f)), m, M::IN7_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(77.600f, 24.500f)), m, M::IN8_INPUT));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(93.000f, 24.500f)), m, M::POLY_INPUT));
+	w->addParam(createParamCentered<RoundBigBlackKnob>(mm2px(Vec(24.000f, 53.500f)), m, M::ROTATE_PARAM));
+	w->addParam(createParamCentered<Trimpot>(mm2px(Vec(15.000f, 72.000f)), m, M::ROTATE_ATT_PARAM));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(33.000f, 72.000f)), m, M::ROTATE_INPUT));
+	w->addParam(createParamCentered<RoundBigBlackKnob>(mm2px(Vec(77.600f, 53.500f)), m, M::RADIATE_PARAM));
+	w->addParam(createParamCentered<Trimpot>(mm2px(Vec(68.600f, 72.000f)), m, M::RADIATE_ATT_PARAM));
+	w->addInput(createInputCentered<PJ301MPort>(mm2px(Vec(86.600f, 72.000f)), m, M::RADIATE_INPUT));
+	w->addParam(createLightParamCentered<VCVLightBezelLatch<RedGreenBlueLight>>(mm2px(Vec(50.800f, 53.500f)), m, M::WRAP_PARAM, M::WRAP_LIGHT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(7.600f, 95.500f)), m, M::CH1_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(7.600f, 104.000f)), m, M::OUT1_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(17.600f, 95.500f)), m, M::CH2_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(17.600f, 104.000f)), m, M::OUT2_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(27.600f, 95.500f)), m, M::CH3_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(27.600f, 104.000f)), m, M::OUT3_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(37.600f, 95.500f)), m, M::CH4_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(37.600f, 104.000f)), m, M::OUT4_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(47.600f, 95.500f)), m, M::CH5_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(47.600f, 104.000f)), m, M::OUT5_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(57.600f, 95.500f)), m, M::CH6_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(57.600f, 104.000f)), m, M::OUT6_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(67.600f, 95.500f)), m, M::CH7_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(67.600f, 104.000f)), m, M::OUT7_OUTPUT));
+	w->addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(mm2px(Vec(77.600f, 95.500f)), m, M::CH8_LIGHT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(77.600f, 104.000f)), m, M::OUT8_OUTPUT));
+	w->addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(93.000f, 104.000f)), m, M::POLY_OUTPUT));
+}

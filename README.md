@@ -1,10 +1,11 @@
 # Eightfold
 
-Three 8-channel modulation modules for VCV Rack 2, inspired by Make Noise's New Universal Skiff System:
+Four 8-channel modules for VCV Rack 2, inspired by Make Noise's New Universal Skiff System:
 
 - **EFG** Eightfold Function Generator (after PoliMATHS)
 - **ETS** Eightfold Time Smear (after MultiMod)
 - **EGX** Eightfold Gesture Extractor (after GTE)
+- **JumbleSale** 8 in, 8 out routing network (after Jumbler)
 
 Independent behavioural re-imaginings written from the public manuals; not affiliated with Make Noise.
 
@@ -13,9 +14,9 @@ Independent behavioural re-imaginings written from the public manuals; not affil
 
 ## Install (Mac, Apple silicon)
 
-1. Download `Eightfold-2.0.0-mac-arm64.vcvplugin` from the latest [release](https://github.com/hardyfinn/NUSS/releases) (or from the artifacts of the latest Actions run).
+1. Download `Eightfold-2.1.0-mac-arm64.vcvplugin` from the latest [release](https://github.com/hardyfinn/NUSS/releases) (or from the artifacts of the latest Actions run).
 2. Put it in Rack's user plugins folder: `~/Library/Application Support/Rack2/plugins-mac-arm64/` (in Rack: Help > Open user folder).
-3. Restart Rack. Search the module browser for `EFG`, `ETS`, `EGX` or `Eightfold`.
+3. Restart Rack. Search the module browser for `EFG`, `ETS`, `EGX`, `JumbleSale` or `Eightfold`.
 
 ## Build from source
 

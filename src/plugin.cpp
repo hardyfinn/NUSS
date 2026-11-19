@@ -7,4 +7,5 @@ void init(Plugin* p) {
 	p->addModel(modelEFG);
 	p->addModel(modelETS);
 	p->addModel(modelEGX);
+	p->addModel(modelJumbleSale);
 }
