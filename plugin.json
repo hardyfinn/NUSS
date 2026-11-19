@@ -1,7 +1,7 @@
 {
   "slug": "Eightfold",
   "name": "Eightfold",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "GPL-3.0-or-later",
   "brand": "Eightfold",
   "author": "Hardy",
@@ -30,6 +30,12 @@
       "name": "EGX Eightfold Gesture Extractor",
       "description": "Gesture to gates: turns the motion of a CV, or a channel index, into 8 channel gates, odd/even gates and a change pulse; a windowed comparator.",
       "tags": ["Logic", "Clock modulator", "Utility", "Polyphonic"]
+    },
+    {
+      "slug": "JumbleSale",
+      "name": "JumbleSale",
+      "description": "8 in, 8 out routing network after Make Noise's Jumbler: Rotate shifts the inputs across the outputs, Radiate blends neighbours; wrap mode, poly in and out.",
+      "tags": ["Mixer", "Panning", "Switch", "Utility", "Polyphonic"]
     }
   ]
 }

@@ -1,12 +1,13 @@
 # Eightfold for VCV Rack
 
-Eightfold is three 8-channel modulation modules for VCV Rack 2.
+Eightfold is four 8-channel modules for VCV Rack 2: three for modulation and one for routing.
 
 | Module | What it does | Inspired by |
 |---|---|---|
 | **EFG** Function Generator (22 HP) | Eight rise/fall functions, each with an oscillation enveloped by its function. One gate fires them through four span modes | Make Noise PoliMATHS |
 | **ETS** Time Smear (12 HP) | One CV in, eight copies out. Each copy plays back a shared buffer at its own speed and phase | Make Noise MultiMod |
 | **EGX** Gesture Extractor (10 HP) | Turns the motion of a CV, or a Channel Index signal, into eight channel gates, odd/even gates and a change pulse | Make Noise GTE |
+| **JumbleSale** (20 HP) | Eight inputs routed to eight outputs: ROTATE shifts them along, RADIATE blends each into its neighbours | Make Noise Jumbler |
 
 These are independent behavioural re-imaginings, written from the public manuals of modules that Make Noise currently makes and sells. They are not affiliated with or endorsed by Make Noise, they don't use Make Noise's names or artwork, and they are not circuit models. Where a manual leaves a number out, Eightfold uses an estimate; the list is at the end of this manual.
 
@@ -155,6 +156,51 @@ Channel Index scale, gate level (10 V or 5 V), and "Pulse when leaving the range
 
 ---
 
+## JumbleSale
+
+![JumbleSale panel](images/jumblesale.png)
+
+### What happens
+
+JumbleSale is a network of VCAs between eight inputs and eight outputs. Signals flow down the panel: inputs at the top, outputs at the bottom, with each input directly above the output it reaches at noon. It works on audio, CV and gates alike.
+
+**ROTATE** shifts every input along the outputs together. At noon input 1 goes to output 1, input 2 to output 2, and so on. One step clockwise sends input 1 to output 2, input 2 to output 3. Between steps a signal crossfades smoothly from one output to the next, so with a single input patched ROTATE is an 8-way panner, and with CV it scans. Anticlockwise moves the other way.
+
+**WRAP** decides what happens at the ends. Off (as on Jumbler): signals pushed past output 8 or output 1 fall silent, so at either end of ROTATE everything is muted, which makes ROTATE CV a scanning VCA. On: signals come back round the other side, so input 8 pushed one step clockwise lands on output 1 and ROTATE turns a full circle.
+
+**RADIATE** bleeds each output into its neighbours, after ROTATE. Fully anticlockwise every channel stays separate. As it opens, the outputs either side fade in, then the ones beyond. Fully clockwise every input reaches every output. Outputs 1 and 8 count as neighbours. Signals add up, so with many inputs and RADIATE open the outputs get loud (they clip at ±12 V, like the hardware's rails); the right-click option "Radiate keeps level" averages instead.
+
+### Controls
+
+| Control | What it does |
+|---|---|
+| 1 to 8 (inputs) | Signal inputs |
+| POLY (input) | Feeds channels 1 to 8 into any input jack that is left empty |
+| ROTATE | Shift, ±8 steps; noon = straight through |
+| RADIATE | Blend into neighbouring outputs, from none to all |
+| ATTEN, CV | Each control's CV and its level and polarity: ±5 V at full ATTEN sweeps the whole range |
+| WRAP | Off: ends mute. On: ends wrap round |
+| 1 to 8 (outputs) | The routed signals |
+| POLY (output) | All eight outputs on one cable |
+
+### Lights
+
+Each output light is **blue** where input 1 has landed under ROTATE, and otherwise shows the signal: **green** for positive, **red** for negative.
+
+### Right-click menu
+
+"Radiate keeps level (average instead of sum)".
+
+### Ideas
+
+- **Eight-way scanner:** one VCO into input 1, an LFO into ROTATE CV, outputs to eight different filters or effects.
+- **Rotating drum kit:** eight trigger patterns into inputs 1 to 8, outputs to eight drum voices, WRAP on. A stepped CV into ROTATE reassigns which pattern plays which drum.
+- **Spreading chord:** POLY from a chord source into POLY in, POLY out to an 8-voice VCA. Open RADIATE slowly to smear the voices together.
+- **Scanning VCA:** WRAP off, an envelope into ROTATE CV with ATTEN fully clockwise and ROTATE fully anticlockwise: the envelope sweeps the signals in from silence.
+- **With EGX:** EGX POLY gates into JumbleSale POLY in; ROTATE moves which output each gate lands on.
+
+---
+
 ## Patch recipes
 
 The NUSS gets its voices from an 8-voice wavetable oscillator and two 4-channel low pass gates. Eightfold doesn't include those, so these recipes use modules from Rack and the free Library: **VCV VCO** or **WT VCO** set to 8 polyphony channels, **Bogaudio LLPG** or **VCV VCA + VCF** as the low pass gate, **VCV Mix** or **Bogaudio Mix8**, **VCV Quantizer**, and **VCV Split/Merge** to get between POLY and single cables.
@@ -224,3 +270,7 @@ Make Noise's manuals describe behaviour but leave many numbers out. Eightfold us
 | EGX range | 50 mV to 10 V, bands from 0 V, 2% hysteresis |
 | EGX gates and pulse | 10 V gates, 1 ms pulse |
 | EGX INDEX out | added: the original has none |
+| JumbleSale channels | 8, not Jumbler's 6, to match the rest of Eightfold |
+| JumbleSale ROTATE | ±8 steps on the knob; linear crossfade between neighbouring outputs |
+| JumbleSale RADIATE | neighbours fade in one ring at a time; full reaches all eight at unity |
+| JumbleSale WRAP, POLY in/out, average option | added: the original has none |

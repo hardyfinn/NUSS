@@ -10,7 +10,7 @@ def overlay(p):
     for it in p.items:
         x, y, k = it["x"], it["y"], it["kind"]
         r = p.half(it)
-        if k in ("knob", "sknob"):
+        if k in ("knob", "sknob", "bknob"):
             out.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#111" stroke="#555" stroke-width="0.3"/><line x1="{x}" y1="{y}" x2="{x}" y2="{y - r + 0.8}" stroke="#fff" stroke-width="0.6"/>')
         elif k == "trim":
             out.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="#d8d8d8" stroke="#777" stroke-width="0.3"/><line x1="{x}" y1="{y}" x2="{x}" y2="{y - r + 0.5}" stroke="#333" stroke-width="0.5"/>')
