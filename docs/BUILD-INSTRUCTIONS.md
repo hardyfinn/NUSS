@@ -39,7 +39,7 @@ Feasibility notes and sources: `docs/RESEARCH.md` (copy of `/mnt/project-files/n
 7. **Ambiguity:** pick the reading closest to the manual, write it in `docs/DECISIONS.md`, list it in the hand-over. The manual extracts in §4 and §5 note the known inconsistencies; follow the resolution given here.
 8. **CPU:** EFG and ETS each under 0.5% of one core at 48 kHz, EGX under 0.1%.
 9. **Persistence:** every button state (modes, cycle type, bipolar, submix, read shape, LFO range, hold) saves to the patch via `dataToJson`/`dataFromJson`. The hardware also saves these at power-off.
-10. Licence GPL-3.0-or-later.
+10. Licence MIT.
 
 ---
 

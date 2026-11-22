@@ -25,3 +25,7 @@ Independent behavioural re-imaginings written from the public manuals; not affil
     make panels        # regenerate res/*.svg and src/generated/Layout.hpp (needs fonttools)
 
 GitHub Actions builds the Mac arm64 plugin on every push and attaches it to a release for tags `v*`.
+
+## Licence
+
+MIT (see `LICENSE.txt`): you're free to use, change, port (VST/CLAP, other platforms, hardware) and share this code, as long as the copyright notice and licence text come along. Fonts on the panel (Inter, Climate Crisis) are under the SIL Open Font Licence.
